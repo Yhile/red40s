@@ -1,0 +1,141 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Red40s</title>
+    <link rel="stylesheet" href="style.css">
+    <style>
+        #gameArea {
+            position: relative;
+            width: 600px;
+            height: 400px;
+            border: 1px solid black;
+            overflow: hidden;
+        }
+        .ball {
+            position: absolute;
+            background-color: red;
+            border-radius: 50%;
+        }
+        body {
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            font-family: Arial, sans-serif;
+        }
+    </style>
+</head>
+<body>
+    <audio id="backgroundMusic" src="Catch Me If You Can.mp3" loop></audio>
+    
+    <div id="logoScreen">
+        <img src="Copy of Untitled (1).png" alt="Logo">
+        <h1>Click/Tap To start</h1>
+        <h1>Yhile</h1>
+    </div>
+    <div id="playScreen" style="display:none;">
+        <button id="playButton">Play</button>
+    </div>
+    <div id="score" style="display:none;">Score: 0</div>
+    <div id="gameArea" style="display:none;"></div>
+
+    <script>
+        let score = 0;
+        let ballInterval;
+        let ballCreationInterval = 1000; // Initial interval for creating balls
+        let isGameActive = false; // Track if the game is active
+
+        const audio = document.getElementById('backgroundMusic');
+
+        document.getElementById('logoScreen').addEventListener('click', () => {
+            document.getElementById('logoScreen').style.display = 'none';
+            document.getElementById('playScreen').style.display = 'flex';
+            audio.currentTime = 39; // Start at 39 seconds
+            audio.play().catch(error => console.log('Autoplay prevented:', error));
+        });
+
+        document.getElementById('playButton').addEventListener('click', () => {
+            document.getElementById('playScreen').style.display = 'none';
+            document.getElementById('score').style.display = 'block';
+            document.getElementById('gameArea').style.display = 'block';
+            startGame();
+        });
+
+        function updateScore() {
+            document.getElementById('score').textContent = `Score: ${score}`;
+        }
+
+        function speedUpGame() {
+            ballCreationInterval = Math.max(200, ballCreationInterval - 100); // Decrease interval, minimum 200ms
+            clearInterval(ballInterval);
+            ballInterval = setInterval(createBall, ballCreationInterval); // Restart ball creation with new interval
+        }
+
+        function createBall() {
+            const ball = document.createElement('div');
+            ball.className = 'ball';
+            const size = 60; // Ball size
+            ball.style.width = `${size}px`;
+            ball.style.height = `${size}px`;
+            ball.style.left = `${Math.random() * (document.getElementById('gameArea').clientWidth - size)}px`;
+            ball.style.top = '-60px'; // Start above the visible area
+            document.getElementById('gameArea').appendChild(ball);
+
+            // Animate the ball falling
+            let fallInterval = setInterval(() => {
+                const top = parseFloat(ball.style.top);
+                if (top < document.getElementById('gameArea').clientHeight) {
+                    ball.style.top = `${top + 2}px`; // Adjust falling speed
+                } else {
+                    clearInterval(fallInterval);
+                    ball.remove(); // Remove ball if it falls out of view
+                    if (isGameActive) {
+                        gameOver(); // Call game over function if ball is missed
+                    }
+                }
+            }, 20);
+
+            // Add click event to the ball
+            ball.addEventListener('click', () => {
+                if (isGameActive) { // Only allow clicks if the game is active
+                    score++;
+                    updateScore();
+                    clearInterval(fallInterval);
+                    ball.remove(); // Remove the ball on click
+                }
+            });
+        }
+
+        function startGame() {
+            score = 0;
+            isGameActive = true; // Set game state to active
+            updateScore();
+            ballCreationInterval = 1000; // Reset interval for new game
+
+            ballInterval = setInterval(createBall, ballCreationInterval); // Create a new ball every second
+        }
+
+        function gameOver() {
+            if (!isGameActive) return; // Prevent multiple calls
+            clearInterval(ballInterval);
+            isGameActive = false; // Set game state to inactive
+            alert(`Game over! Your score is ${score}`);
+            resetGame(); // Call reset function on game over
+        }
+
+        function resetGame() {
+            // Clear game area
+            document.getElementById('gameArea').innerHTML = '';
+            // Reset score display only after the game over alert
+            setTimeout(() => {
+                updateScore();
+                // Restart the game after a brief pause
+                startGame();
+            }, 1000); // Delay before restarting to allow player to see game over
+        }
+    </script>
+    <footer>Yhile If you loose the score will show as zero twice and then will restart</footer>
+</body>
+</html>
+
